@@ -56,6 +56,7 @@ import kotlinx.coroutines.launch
 class InstallViewModel @Keep constructor(private val manager: SplitInstallManager) : ViewModel() {
 
     val pictureModuleStatus = getStatusLiveDataForModule(PICTURE_MODULE)
+    val shareModuleStatus = getStatusLiveDataForModule(SHARE_MODULE)
 
     private val _events: BroadcastChannel<Event> = BroadcastChannel(Channel.BUFFERED)
     val events: Flow<Event> = _events.asFlow()
@@ -102,6 +103,13 @@ class InstallViewModel @Keep constructor(private val manager: SplitInstallManage
         )
     }
 
+    fun invokeSharePalette() {
+        openActivityInOnDemandModule(
+            SHARE_MODULE,
+            "com.sharepalette.SharePaletteFragment"
+        )
+    }
+
     private fun openActivityInOnDemandModule(moduleName: String, fragmentName: String) {
         if (manager.installedModules.contains(moduleName)) {
             viewModelScope.launch {
@@ -110,6 +118,7 @@ class InstallViewModel @Keep constructor(private val manager: SplitInstallManage
         } else {
             val status = when (moduleName) {
                 PICTURE_MODULE -> pictureModuleStatus.value
+                SHARE_MODULE -> shareModuleStatus.value
                 else -> throw IllegalArgumentException("State not implemented")
             }
             if (status is NeedsConfirmation) {
@@ -150,3 +159,4 @@ class InstallViewModelProviderFactory(
 }
 
 const val PICTURE_MODULE = "picture"
+const val SHARE_MODULE = "sharepalette"

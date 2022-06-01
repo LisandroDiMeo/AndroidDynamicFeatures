@@ -32,6 +32,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.play.core.appupdate.AppUpdateManager
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.appupdate.testing.FakeAppUpdateManager
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.ktx.AppUpdateResult
 import com.google.android.play.core.ktx.AppUpdateResult.Available
@@ -48,6 +49,8 @@ import com.google.android.play.core.review.ReviewManagerFactory
 import com.google.android.play.core.splitcompat.SplitCompat
 import com.google.android.play.core.splitinstall.SplitInstallManager
 import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
+import com.google.android.play.core.splitinstall.testing.FakeSplitInstallManager
+import com.google.android.play.core.splitinstall.testing.FakeSplitInstallManagerFactory
 import com.google.android.samples.dynamicfeatures.R
 import com.google.android.samples.dynamicfeatures.databinding.FragmentMainBinding
 import com.google.android.samples.dynamicfeatures.state.ColorViewModel
@@ -95,7 +98,8 @@ class MainFragment : Fragment(R.layout.fragment_main) {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        splitInstallManager = SplitInstallManagerFactory.create(context)
+        splitInstallManager = FakeSplitInstallManagerFactory.create(context) // SplitInstallManagerFactory.create(context)
+        // (splitInstallManager as FakeSplitInstallManager).setShouldNetworkError(true)
         showCurrentInstalledMethods(context)
         appUpdateManager = AppUpdateManagerFactory.create(context)
         reviewManager = ReviewManagerFactory.create(context)
@@ -112,6 +116,11 @@ class MainFragment : Fragment(R.layout.fragment_main) {
             btnInvokePalette.setOnClickListener {
                 startModuleWhenReady = true
                 installViewModel.invokePictureSelection()
+            }
+
+            btnSharePalette.setOnClickListener {
+                startModuleWhenReady = true
+                installViewModel.invokeSharePalette()
             }
 
             btnToggleLight.setOnClickListener {
@@ -173,11 +182,16 @@ class MainFragment : Fragment(R.layout.fragment_main) {
                     else -> throw IllegalStateException("Event type not handled: $event")
                 }
             }.launchIn(viewLifecycleOwner.lifecycleScope)
-            pictureModuleStatus.observe(viewLifecycleOwner, Observer { status ->
+            pictureModuleStatus.observe(viewLifecycleOwner) { status ->
                 bindings?.let {
                     updateModuleButton(status)
                 }
-            })
+            }
+            shareModuleStatus.observe(viewLifecycleOwner) { status ->
+                bindings?.let {
+                    updateModuleButton(status, 1)
+                }
+            }
         }
     }
 
@@ -233,8 +247,12 @@ class MainFragment : Fragment(R.layout.fragment_main) {
         }
     }
 
-    private fun updateModuleButton(status: ModuleStatus) {
-        bindings?.btnInvokePalette?.apply {
+    private fun updateModuleButton(status: ModuleStatus, moduleId: Int = 0) {
+        var btn = bindings?.btnInvokePalette
+        if(moduleId == 1){
+            btn = bindings?.btnSharePalette
+        }
+        btn?.apply {
             isEnabled = status !is ModuleStatus.Unavailable
             when (status) {
                 ModuleStatus.Available -> {
@@ -253,11 +271,12 @@ class MainFragment : Fragment(R.layout.fragment_main) {
                     shrink()
                 }
                 ModuleStatus.Installed -> {
-                    SplitCompat.installActivity(requireActivity())
+                    //SplitCompat.installActivity(requireActivity())
                     shrink()
                     if (startModuleWhenReady) {
                         startModuleWhenReady = false
-                        installViewModel.invokePictureSelection()
+                        if (moduleId == 1) installViewModel.invokeSharePalette()
+                        else installViewModel.invokePictureSelection()
                     }
                 }
                 is ModuleStatus.NeedsConfirmation -> {

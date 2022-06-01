@@ -71,7 +71,7 @@ android {
         freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
     }
 
-    dynamicFeatures = [':features:picture']
+    dynamicFeatures = [':features:picture', ':sharepalette']
 }
 
 play {
@@ -80,7 +80,7 @@ play {
 }
 
 dependencies {
-    api "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${versions.kotlin}"
+    api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${versions.kotlin}"
     api "androidx.appcompat:appcompat:${versions.appcompat}"
     api "androidx.activity:activity-ktx:${versions.activity}"
     api "androidx.constraintlayout:constraintlayout:${versions.constraintLayout}"
@@ -94,6 +94,8 @@ dependencies {
 
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:${versions.lifecycle}"
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:${versions.lifecycle}"
+
+    implementation "com.google.android.play:core-ktx:${versions.playcoreKtx}"
 }
 
 /* From ktlint getting started guide */
